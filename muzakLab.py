@@ -41,9 +41,12 @@ New Project Ideas I have:
 What have I learned from IDEO that I can apply
 	- fullstack flask stuff whatever thatll come later
 	- prototype fast and often
+	- HMW take normal boring sounds and recombine them in interesting ways to create a compelling music experience
+
+Hypotheses:
 	- Hypothesis: Speeding up and slowing down might be interesting
 	- Hypothesis: placing odd time signatures (like a 7 part trill in a 4/4 beat) in otherwise normal songs might be cool
-	- HMW take normal boring sounds and recombine them in interesting ways to create a compelling music experience
+
 """
 import copy, math, os, random, string
 
@@ -82,7 +85,7 @@ def reverse(x):
 
 ### EXPERIMENTS ###
 
-def fastMIDITrills():
+def randomMidiTrills():
 	outputFile = pm.PrettyMIDI()
 	track = pm.Instrument(38, is_drum=True) # 38 Acoustic Snare
 
@@ -129,6 +132,72 @@ def fastMIDITrills():
 
 	return (track, trackName)
 
+def meteredMIDIBeat(bpm=140, beatsInMeasure=4, numMeasures=32):
+	outputMIDI = pm.PrettyMIDI()
+	track = pm.Instrument(38, is_drum=True) # 38 Acoustic Snare
+
+	oneBeat = 60.0 / bpm
+	currTime = 0
+	for measure in xrange(numMeasures):
+		for beat in xrange(beatsInMeasure):
+			prob = random.random()
+			if prob < .3:
+				pattern = 'xxxx'
+			elif prob < .4:
+				pattern = 'xx_x'
+			elif prob < .5:
+				pattern = 'x'
+			elif prob < .79:
+				pattern = 'xx'
+			elif prob < .89:
+				pattern = '_x_x'
+			elif prob < .97:
+				pattern = 'xxx'
+			else:
+				pattern = 'xxxxxxxxxxxxxxx'
+
+			currNotes = generateNotes(currTime, currTime+oneBeat, pattern)
+			track.notes.extend(currNotes)
+			currTime += oneBeat
+
+	trackName = ''.join(random.choice(string.ascii_uppercase + string.digits) for _ in range(10)) + ".mid"
+	outputMIDI.instruments.append(track)
+	outputMIDI.write("outputs/" + trackName)
+
+	print "w00t! wrote %s" % trackName
+
+	return (track, trackName)
+
+def generateNotes(start, end, pattern):
+	# pattern is an array of either 'x' or '_'
+	noteLength = (end-start) / len(pattern)
+	notes = []
+	velocity = 100
+	pitch = 80
+
+	currTime = start
+
+	for char in pattern:
+		if char == 'x':
+			currNote = pm.Note(velocity, pitch, start=currTime, end=currTime+noteLength)
+			notes.append(currNote)
+		currTime += noteLength
+
+	return notes
+
+
+def importSamples(samplesDir='/Users/mendelbot/Downloads/jazzy_chill_out/one_shot_drums/'):
+	# Returns a files array
+	allSamples = os.listdir(samplesDir)
+	files = {}
+
+	for sample in allSamples:
+		currFile = essentia.standard.MonoLoader(filename=samplesDir + sample)()
+		files[sample] = currFile
+
+	return files
+
+
 def fastSampleTrills():
 	"""
 	Use the MIDI from fast midi trills, and just place and glue samples over it
@@ -136,18 +205,15 @@ def fastSampleTrills():
 		grab a random samples
 		grab that length of that sample and shove it in there
 	"""
+	# Setup vars
 	fs = 44100
-	samplesDir = '/Users/mendelbot/Downloads/jazzy_chill_out/one_shot_drums/'
-	allSamples = os.listdir(samplesDir)
-	files = {}
-
 	finalTrack = np.empty([1,1])
 
-	for sample in allSamples:
-		currFile = essentia.standard.MonoLoader(filename=samplesDir + sample)()
-		files[sample] = currFile
-
-	track, trackName = fastMIDITrills()
+	# Get Samples
+	files = importSamples()
+	
+	#Get MIDI to write
+	track, trackName = randomMidiTrills()
 
 	for note in track.notes:
 		length = note.end - note.start
@@ -163,6 +229,7 @@ def fastSampleTrills():
 
 		finalTrack = np.append(finalTrack, thisSample)
 
+		# If we're falling behind on samples, pad with some zeroes
 		if note.end * fs > len(finalTrack):
 			howBehind = int(note.end * fs - len(finalTrack))
 	
@@ -174,13 +241,47 @@ def fastSampleTrills():
 	essentia.standard.MonoWriter(filename="outputs/%s.wav" % trackName, format="wav")(essentia.array(finalTrack)) # this shit takes forever ;(
 	print "w00t! done"
 
+def moreRhythmicSamples():
+	# Setup vars
+	fs = 44100
+	finalTrack = np.empty([1,1])
 
+	# Get Samples
+	files = importSamples()
+	
+	#Get MIDI to write
+	track, trackName = meteredMIDIBeat()
 
+	for note in track.notes:
+		length = note.end - note.start
 
+		randomFileName = files.keys()[int(random.random()*len(files.keys()))]
+
+		randomFile = files[randomFileName]
+		numSamples = int(fs * length)
+
+		thisSample = randomFile[0:numSamples]
+		if random.random() < .16:
+			thisSample = reverse(thisSample)
+
+		finalTrack = np.append(finalTrack, thisSample)
+
+		# If we're falling behind on samples, pad with some zeroes
+		if note.end * fs > len(finalTrack):
+			howBehind = int(note.end * fs - len(finalTrack))
+	
+			if howBehind > 0:
+				zeros = [0] * howBehind
+				finalTrack = np.append(finalTrack, zeros)
+
+	print "Writing wav track"
+	essentia.standard.MonoWriter(filename="outputs/%s.wav" % trackName, format="wav")(essentia.array(finalTrack)) # this shit takes forever ;(
+	print "w00t! done"
 
 def run():
-	#fastMIDITrills()
-	fastSampleTrills()
+	#randomMidiTrills()
+	#fastSampleTrills()
+	moreRhythmicSamples()
 
 if __name__ == "__main__":
     run()
