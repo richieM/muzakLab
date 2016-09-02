@@ -48,7 +48,7 @@ Hypotheses:
 	- Hypothesis: placing odd time signatures (like a 7 part trill in a 4/4 beat) in otherwise normal songs might be cool
 
 """
-import copy, math, os, random, string
+import copy, math, os, random, string, sys
 
 import essentia.standard, numpy as np, pretty_midi as pm
 
@@ -242,7 +242,12 @@ def fastSampleTrills():
 	print "w00t! done"
 
 def moreRhythmicSamples():
-	# Setup vars
+	
+	if len(sys.argv) == 2:
+		bpm = int(sys.argv[1])
+	else:
+		bpm = 140
+
 	fs = 44100
 	finalTrack = np.empty([1,1])
 
@@ -250,7 +255,7 @@ def moreRhythmicSamples():
 	files = importSamples()
 	
 	#Get MIDI to write
-	track, trackName = meteredMIDIBeat()
+	track, trackName = meteredMIDIBeat(bpm=bpm)
 
 	for note in track.notes:
 		length = note.end - note.start
