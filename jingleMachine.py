@@ -2,14 +2,18 @@ import copy, math, random, os, string, sys
 import essentia.standard, pretty_midi as pm, numpy as np
 SAMPLES_DIR = "/Users/mendelbot/Muzak/python/samples/"
 
+
 def importSamples(samplesDir='/Users/mendelbot/Muzak/python/muzakLab/samples/oneShots/'):
 	# Returns a files array
+	print "importing"
 	allSamples = os.listdir(samplesDir)
 	files = {}
 
 	for sample in allSamples:
 		currFile = essentia.standard.MonoLoader(filename=samplesDir + sample)()
 		files[sample] = currFile
+
+	print "done importing"
 
 	return files
 
@@ -33,7 +37,7 @@ def reverse(x):
         arr[length-i-1] = temp
     return arr
 
-def mathRockJingle(fileName):
+def mathRockJingle(fileName=None, audio=None, samples=None):
 	"""
 	Fill the space with some samples and math rock it...
 
@@ -42,7 +46,11 @@ def mathRockJingle(fileName):
 
 	### Generate some MIDI based on the inputs
 	fs = 44100
-	x = essentia.standard.MonoLoader(filename=fileName)()
+	if fileName:
+		x = essentia.standard.MonoLoader(filename=fileName)()
+	else:
+		x = essentia.array(audio)
+
 	onsetTimes, onset_rate = essentia.standard.OnsetRate()(x)
 	track = pm.Instrument(38, is_drum=True) # 38 Acoustic Snare
 	trackName = ''.join(random.choice(string.ascii_uppercase + string.digits) for _ in range(10))
@@ -61,14 +69,15 @@ def mathRockJingle(fileName):
 	print "** Assign random samples to the MIDI"
 	finalTrack = np.empty([1,1])
 
-	files = importSamples() # Get Samples
+	if samples is None:
+		files = importSamples() # Get Samples
 
 	for note in track.notes:
 		length = note.end - note.start
 
-		randomFileName = files.keys()[int(random.random()*len(files.keys()))]
+		randomFileName = samples.keys()[int(random.random()*len(samples.keys()))]
 
-		randomFile = files[randomFileName]
+		randomFile = samples[randomFileName]
 		numSamples = int(fs * length)
 
 		thisSample = randomFile[0:numSamples]
@@ -85,31 +94,32 @@ def mathRockJingle(fileName):
 				zeros = [0] * howBehind
 				finalTrack = np.append(finalTrack, zeros)
 
-	finalTrack = np.append(finalTrack, np.zeros(len(x) - len(finalTrack)))
+	finalTrack = np.append(finalTrack, np.zeros(len(x) - len(finalTrack))) / 2.5 # quieter
 	combinedTrack = np.add(x, finalTrack)
 
 	print "Writing wav track"
-	essentia.standard.MonoWriter(filename="outputs/%s.wav" % trackName, format="wav")(essentia.array(combinedTrack)) # this shit takes forever ;(
+	if fileName:
+		essentia.standard.MonoWriter(filename="outputs/%s.wav" % trackName, format="wav")(essentia.array(combinedTrack)) # this shit takes forever ;(
+	else:
+		return combinedTrack
 	print "w00t! done"
 	print "trackName: %s" % trackName
 
 
 def chooseRandomRhythm():
 	prob = random.random()
-	if prob < .6:
+	if prob < .5:
 		pattern = 'x'
-	elif prob < .7:
+	elif prob < .67:
 		pattern = 'xx'
 	elif prob < .8:
-		pattern = 'xxxx'
-	elif prob < .85:
-		pattern = 'x_x_'
-	elif prob < .8:
 		pattern = 'xxx'
+	elif prob < .9:
+		pattern = 'x_x_'
 	elif prob < .95:
-		pattern = 'xx_x'
+		pattern = 'xxxxxxx'
 	else:
-		pattern = '_x_x'
+		pattern = 'xxxx'
 	return pattern
 
 def generateNotes(start, end, pattern):
