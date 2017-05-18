@@ -133,10 +133,14 @@ def randomMidiTrills():
 	return (track, trackName)
 
 def meteredMIDIBeat(bpm=140, beatsInMeasure=4, numMeasures=32):
+	maxBPM = 180
+	minBPM = 80
+	onTheWayUp = True
+	changeTheBPM = False
+	
 	outputMIDI = pm.PrettyMIDI()
 	track = pm.Instrument(38, is_drum=True) # 38 Acoustic Snare
 
-	oneBeat = 60.0 / bpm
 	currTime = 0
 	for measure in xrange(numMeasures):
 		for beat in xrange(beatsInMeasure):
@@ -159,6 +163,19 @@ def meteredMIDIBeat(bpm=140, beatsInMeasure=4, numMeasures=32):
 			currNotes = generateNotes(currTime, currTime+oneBeat, pattern)
 			track.notes.extend(currNotes)
 			currTime += oneBeat
+
+			if changeTheBPM:
+				if bpm > maxBPM:
+					onTheWayUp = False
+				elif bpm < minBPM:
+					onTheWayUp = True
+
+				bpmVelocity = 2
+				if onTheWayUp:
+					bpm += bpmVelocity
+				else:
+					bpm -= bpmVelocity
+				oneBeat = 60.0 / bpm
 
 	trackName = ''.join(random.choice(string.ascii_uppercase + string.digits) for _ in range(10)) + ".mid"
 	outputMIDI.instruments.append(track)
@@ -185,8 +202,8 @@ def generateNotes(start, end, pattern):
 
 	return notes
 
-
-def importSamples(samplesDir='/Users/mendelbot/Downloads/jazzy_chill_out/one_shot_drums/'):
+# samplesDir='/Users/mendelbot/Downloads/jazzy_chill_out/one_shot_drums/'
+def importSamples(samplesDir='/Users/mendelbot/Muzak/python/muzakLab/samples/oneShots/'):
 	# Returns a files array
 	allSamples = os.listdir(samplesDir)
 	files = {}
