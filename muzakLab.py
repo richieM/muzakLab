@@ -1,52 +1,5 @@
 """
-So, what's the basic idea of this project?
-
-Stuff to think about:
-- what i've already worked on, and how i felt about it
-- new project ideas I have
-- tools I have and want to explore further
-
-* What i've already worked on, and how i felt about it
-Scramble: Takes in a MIDI files and 'scrambles' it up, completely randomly.
-Transformations include
-	- Reverse: sounds awesome but a bit cliche and gets old after a bit...
-	- Invert: create notes in previously silent spaces. Hmm
-	- Rotate: Kinda disorienting
-	- Syncopate: Cool, but would be cooler if it wasn't just trivial windowing
-	- Embed: Cool idea, but usually blows up. Might still work if I put a cap of like 20ms on it...
-	- TimeMult: Speed up / slow down
-Useful stuff I can pull from this:
-	- How to write MIDI using prettyMidi
-	- Basic logic structure for decision making (including statistical feedback) was used for scramblaudio
-
-Scrambaudio: Scramble but based on pre-recorded audio
-Transformations include:
-	- Reverse
-	- Rotate
-	- ScrambleChunks: finds the onset times and just scrambles it to hell. It sometimes repeats which is half fun half annoying AF
-	- Syncopate: linear window for now
-Useful stuff I can pull from this:
-	- Using essentia.onset_times
-	- Writing files with essentia, altho its mono right now and takes fcking forever to write to file (shouldnt take that long, tho...)
-
-New Project Ideas I have:
-	- Writing midi in weird sped up freaked out ways
-	- Taking samples and maybe glueing them on top of each other from the way above-mentioned MIDI is layed out
-	- Taking samples and gnargling them all up and glueing them back together. But not in random ways
-	- A python web app that takes sounds and then u can tweek some parameters and it serves sound.  I wonder how hard it would be to stream that sound?
-	- Machine learning ideas:
-		Have a huge bank of samples.  Pour through them to cluster them in interesting ways, or do analysis of spectral features on all of them, can even save that analysis in a DB for speed. Then reorganize the sounds in spectral-ish ways.
-		Imagine a song where its the same song thruout but the samples and sounds just change thruout, but the basic structure is all the same and so boring
-
-What have I learned from IDEO that I can apply
-	- fullstack flask stuff whatever thatll come later
-	- prototype fast and often
-	- HMW take normal boring sounds and recombine them in interesting ways to create a compelling music experience
-
-Hypotheses:
-	- Hypothesis: Speeding up and slowing down might be interesting
-	- Hypothesis: placing odd time signatures (like a 7 part trill in a 4/4 beat) in otherwise normal songs might be cool
-
+Right now, generates a random MIDI pattern and randomly overlays samples onto it, writes a .wav file
 """
 import copy, math, os, random, string, sys
 
@@ -140,6 +93,8 @@ def meteredMIDIBeat(bpm=140, beatsInMeasure=4, numMeasures=32):
 	
 	outputMIDI = pm.PrettyMIDI()
 	track = pm.Instrument(38, is_drum=True) # 38 Acoustic Snare
+
+	oneBeat = 60.0 / bpm
 
 	currTime = 0
 	for measure in xrange(numMeasures):

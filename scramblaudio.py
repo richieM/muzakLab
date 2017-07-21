@@ -258,7 +258,7 @@ def Run(theFile):
     seedRhythms = [copy.copy(x) for i in range(numTracks)]
     for track, choices, seed, i in zip(tracks, eventChoices, seedRhythms, range(numTracks)):
         print "Calculating Track %d" % (i+1)
-        tracks[i] = np.append(tracks[i], jingleMachine.mathRockJingle(audio=seed, samples=samples))
+        tracks[i] = np.append(tracks[i], jingleMachine.overlayAudioWithSamples(audio=seed, samples=samples))
         for choice in choices:
             if choice == 0:
                 # Reverse(x)
@@ -286,10 +286,10 @@ def Run(theFile):
                 print "Syncopate 17"
                 transAudio = Syncopate(seed, fs, 3)
             
-            combinedTrack = jingleMachine.mathRockJingle(audio=transAudio, samples=samples)
+            combinedTrack = jingleMachine.overlayAudioWithSamples(audio=transAudio, samples=samples)
 
             tracks[i] = np.append(tracks[i], combinedTrack)
-            seed = essentia.array(transAudio)
+            seed = essentia.array(transAudio) # Don't scramble the overlayedSamples, just the raw audio
     
     # TODO ugly hack, doesn't work with numTracks, and SO SLOW
     print "All done! meowmeow <3"
@@ -306,5 +306,6 @@ def Run(theFile):
 
 
 if __name__ == "__main__":
-	fileName = '/Users/mendelbot/Muzak/python/samples/berlin_everything.wav'
-	scramblaudio = Run(fileName)
+    fileName = '/Users/mendelbot/Muzak/python/samples/do_a_jig.wav'
+    print fileName[fileName.rfind("/")+1:]
+    scramblaudio = Run(fileName)

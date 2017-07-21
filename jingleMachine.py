@@ -1,3 +1,5 @@
+# Utility used by scramblaudio, mainly overlayAudioWithSamples
+
 import copy, math, random, os, string, sys
 import essentia.standard, pretty_midi as pm, numpy as np
 SAMPLES_DIR = "/Users/mendelbot/Muzak/python/samples/"
@@ -37,7 +39,7 @@ def reverse(x):
         arr[length-i-1] = temp
     return arr
 
-def mathRockJingle(fileName=None, audio=None, samples=None):
+def overlayAudioWithSamples(fileName=None, audio=None, samples=None):
 	"""
 	Fill the space with some samples and math rock it...
 
@@ -141,4 +143,4 @@ def generateNotes(start, end, pattern):
 	
 if __name__ == "__main__":
 	fileName = 'getting_jiggy_post.wav'
-	scramblaudio = mathRockJingle(SAMPLES_DIR + fileName)
+	scramblaudio = overlayAudioWithSamples(SAMPLES_DIR + fileName)
